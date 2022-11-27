@@ -21,13 +21,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
-    <Folder Include="Entidades\" />
     <Folder Include="DTOs\" />
-    <Folder Include="Filtros\" />
     <Folder Include="wwwroot\" />
     <Folder Include="Services\" />
-    <Folder Include="Validaciones\" />
   </ItemGroup>
 
 </Project>
