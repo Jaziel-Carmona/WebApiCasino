@@ -1,7 +1,7 @@
 ﻿
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
-using WebApiMusicaSeg.Filtros;
+using WebApiCasino.Filtros;
 
 
 namespace WebApiCasino
@@ -31,6 +31,7 @@ namespace WebApiCasino
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
 
+            services.AddAutoMapper(typeof(Startup));
 
             services.AddCors(opciones =>
             {

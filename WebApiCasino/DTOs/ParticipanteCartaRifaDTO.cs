@@ -2,8 +2,10 @@
 {
     public class ParticipanteCartaRifaDTO
     {
-        public List<int> CartaDTO { get; set; }
-        public List<int> RifaDTO { get; set; }
+        public string ParticipanteDTO { get; set; }
+        public string CartaDTO { get; set; }
+        public string RifaDTO { get; set; }
+
     }
 }
 

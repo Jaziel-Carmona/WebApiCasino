@@ -17,6 +17,7 @@ namespace WebApiCasino.Utilidades
             CreateMap<RifaCreacionDTO, Rifa>()
                 .ForMember(rifa => rifa.ParticipanteRifaCarta, opciones => opciones.MapFrom(MapParticipanteRifaCarta));
             CreateMap<Rifa, RifaDTO>();
+            CreateMap<RifaCreacionDTO, Rifa>();
             CreateMap<Rifa, RifaDTOConParticipantes>()
                 .ForMember(rifaDTO => rifaDTO.Participantes, opciones => opciones.MapFrom(MapRifaDTOParticipantes));
             CreateMap<RifaPatchDTO, Rifa>().ReverseMap();
@@ -39,8 +40,8 @@ namespace WebApiCasino.Utilidades
             {
                 result.Add(new RifaDTO()
                 {
-                    Id = participanterifaCarta.IdRifa,
-                    NombreRifa = participanterifaCarta.Rifa.NombreRifa
+                    NombreRifa = participanterifaCarta.Rifa.NombreRifa,
+                    Fecha_Realizacion = participanterifaCarta.Rifa.Fecha_Realizacion
                 });
             }
 

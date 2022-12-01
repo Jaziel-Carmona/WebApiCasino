@@ -1,11 +1,19 @@
 {
   "Version": 1,
-  "Hash": "P6IIfNkv7n39y0EQFbLOCZ8ZTGTtsUmon810bv5FWdQ=",
+  "Hash": "wl0NGxX9YkPp+ZciNK7Ho3wumO31JnkjsmKvC6u3Sug=",
   "Source": "WebApiCasino",
   "BasePath": "_content/WebApiCasino",
   "Mode": "Default",
   "ManifestType": "Build",
   "ReferencedProjectsConfiguration": [],
-  "DiscoveryPatterns": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "WebApiCasino\\wwwroot",
+      "Source": "WebApiCasino",
+      "ContentRoot": "C:\\Users\\Alejandro\\OneDrive\\Documentos\\PIA_BACKEND\\WebApiCasino\\WebApiCasino\\wwwroot\\",
+      "BasePath": "_content/WebApiCasino",
+      "Pattern": "**"
+    }
+  ],
   "Assets": []
 }

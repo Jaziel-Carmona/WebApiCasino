@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace WebApiMusicaSeg.Filtros
+namespace WebApiCasino.Filtros
 {
     public class FiltroDeExcepcion : ExceptionFilterAttribute
     {
