@@ -5,15 +5,11 @@ namespace WebApiCasino.Entidades
 {
     public class Carta
     {
-        public int id { get; set; }
-        [Required(ErrorMessage = "El siguiente campo es obligatorio.")]
-        [StringLength(maximumLength: 20, ErrorMessage = "El campo {0} solo puede tener máximo 20 carácteres")]
-        public string NombreCarta { get; set; }
+        public int Id { get; set; }
 
-        public Carta(int id, string NombreCarta)
-        {
-            this.id = id;
-            this.NombreCarta = NombreCarta;
-        }
+        [RangoNumeroCartas]
+        public int NumeroCarta { get; set; }
+
+        public List<ParticipanteRifaCarta> ParticipanteRifaCarta { get; set; }
     }
 }
