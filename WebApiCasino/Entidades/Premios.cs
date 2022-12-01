@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Identity;
 
 namespace WebApiCasino.Entidades
 {
@@ -17,6 +18,10 @@ namespace WebApiCasino.Entidades
         public int RifaId { get; set; }
 
         public Rifa Rifa { get; set; }
+
+        public string UsuarioId { get; set; }
+
+        public IdentityUser Usuario { get; set; }
 
     }
 }

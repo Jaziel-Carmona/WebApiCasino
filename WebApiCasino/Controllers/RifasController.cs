@@ -11,7 +11,7 @@ namespace WebApiCasino.Controllers
 {
     [ApiController]
     [Route("Rifas")]
-    //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Administrador")]
     public class RifasController : ControllerBase
     {
         private readonly ApplicationDbContext dbContext;

@@ -108,7 +108,7 @@ namespace WebApiCasino.Controllers
         {
             var usuario = await userManager.FindByEmailAsync(editarAdminDTO.Email);
 
-            await userManager.AddClaimAsync(usuario, new Claim("EsAdmin", "1"));
+            await userManager.AddClaimAsync(usuario, new Claim("Administrador", "1"));
 
             return NoContent();
         }
@@ -118,7 +118,7 @@ namespace WebApiCasino.Controllers
         {
             var usuario = await userManager.FindByEmailAsync(editarAdminDTO.Email);
 
-            await userManager.RemoveClaimAsync(usuario, new Claim("EsAdmin", "1"));
+            await userManager.RemoveClaimAsync(usuario, new Claim("Administrador", "1"));
 
             return NoContent();
         }

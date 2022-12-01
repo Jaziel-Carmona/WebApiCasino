@@ -17,8 +17,5 @@ namespace WebApiCasino.Entidades
 
         public List<ParticipanteRifaCarta> ParticipanteRifaCarta { get; set; }
 
-        //public string UsuarioId { get; set; }
-
-        //public IdentityUser Usuario { get; set; }
     }
 }

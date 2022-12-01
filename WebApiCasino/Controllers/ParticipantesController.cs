@@ -10,7 +10,7 @@ namespace WebApiCasino.Controllers
 {
     [ApiController]
     [Route("Participantes")]
-    //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class ParticipantesController : ControllerBase
     {
 
@@ -34,7 +34,6 @@ namespace WebApiCasino.Controllers
                 return NotFound("No se encontro participante con ese id");
             }
 
-            logger.LogInformation("Se obtiene el registro de un participante.");
 
             return mapper.Map<GetParticipanteDTO>(participante);
         }
