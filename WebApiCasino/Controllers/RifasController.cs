@@ -11,147 +11,124 @@ namespace WebApiCasino.Controllers
 {
     [ApiController]
     [Route("Rifas")]
+    //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
     public class RifasController : ControllerBase
     {
         private readonly ApplicationDbContext dbContext;
+        private readonly ILogger<ParticipantesController> logger;
+        private readonly IWebHostEnvironment env;
         private readonly IMapper mapper;
-        public RifasController(ApplicationDbContext context, IMapper mapper)
+
+        public RifasController(ApplicationDbContext dbContext, ILogger<ParticipantesController> logger, IWebHostEnvironment env, IMapper mapper)
         {
-            this.dbContext = context;
+            this.dbContext = dbContext;
+            this.logger = logger;
+            this.env = env;
             this.mapper = mapper;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<List<Rifa>>> GetAll()
+        [HttpGet("Obtener_Rifa_Con_Premios/Rifa/{id:int}", Name = "GetPremiosRifa")]
+        public async Task<ActionResult<RifaDTOConPremios>> GetPremiosRifaId([FromRoute] int id)
         {
-            return await dbContext.Rifas.ToListAsync();
-        }
-
-
-        //[HttpGet("{id:int}", Name = "obtenerRifa")]
-        ////[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
-        //public async Task<ActionResult<RifaDTOConParticipantes>> GetById(int id)
-        //{
-        //    var rifa = await dbContext.Rifas
-        //        .Include(rifaDB => rifaDB.ParticipanteRifaCarta)
-        //        .ThenInclude(participanterifaCartaDB => participanterifaCartaDB.Participante)
-        //        .Include(premioDB => premioDB.Premios)
-        //        .FirstOrDefaultAsync(x => x.Id == id);
-
-        //    if (rifa == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    rifa.ParticipanteRifaCarta = rifa.ParticipanteRifaCarta.OrderBy(x => x.Orden_Lanzamiento).ToList();
-
-        //    return mapper.Map<RifaDTOConParticipantes>(rifa);
-        //}
-
-        [HttpPost]
-        public async Task<ActionResult> Post(RifaCreacionDTO rifaCreacionDTO)
-        {
-
-            if (rifaCreacionDTO.ParticipantesIds == null)
-            {
-                return BadRequest("No se puede crear una rifa sin participantes.");
-            }
-
-            var participantesIds = await dbContext.Participantes
-                .Where(participanteBD => rifaCreacionDTO.ParticipantesIds.Contains(participanteBD.Id)).Select(x => x.Id).ToListAsync();
-
-            if (rifaCreacionDTO.ParticipantesIds.Count != participantesIds.Count)
-            {
-                return BadRequest("No existe existe uno de los participantes registrados");
-            }
-
-            var rifa = mapper.Map<Rifa>(rifaCreacionDTO);
-
-            //OrdenarPorParticipantes(rifa);
-
-            dbContext.Add(rifa);
-            await dbContext.SaveChangesAsync();
-
-            var rifaDTO = mapper.Map<RifaDTO>(rifa);
-
-            return CreatedAtRoute("obtenerRifa", new { id = rifa.Id }, rifaDTO);
-        }
-
-        [HttpPut("{id:int}")]
-        public async Task<ActionResult> Put(int id, RifaCreacionDTO rifaCreacionDTO)
-        {
-            var rifaDB = await dbContext.Rifas
-                .Include(x => x.ParticipanteRifaCarta)
+            var rifa = await dbContext.Rifas
+                .Include(x => x.Premios)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
-            if (rifaDB == null)
+            if (rifa == null)
             {
-                return NotFound();
+                return NotFound("No se encontro una rifa con el Id ingresado");
             }
 
-            rifaDB = mapper.Map(rifaCreacionDTO, rifaDB);
+            List<PremioDTO> listapremios = new List<PremioDTO>();
 
-            //OrdenarPorParticipantes(rifaDB);
+            foreach (var i in rifa.Premios)
+            {
+                listapremios.Add(new PremioDTO
+                {
+                    NombrePremio = i.NombrePremio,
+                    NumPremio = i.NumPremio,
+                });
+            }
 
-            await dbContext.SaveChangesAsync();
-            return NoContent();
+            var rifapremio = new RifaDTOConPremios()
+            {
+                NombreRifa = rifa.NombreRifa,
+                Fecha_Realizacion = rifa.Fecha_Realizacion,
+                PremioDTO = listapremios
+            };
+
+            logger.LogInformation("Se obtiene el listado de premios de una rifa.");
+            return mapper.Map<RifaDTOConPremios>(rifapremio);
+
         }
 
-
-        [HttpDelete("{id:int}")]
-        public async Task<ActionResult> Delete(int id)
+        [HttpPost("CrearUnaRifa")]
+        public async Task<ActionResult> Post(RifaCreacionDTO rifaCreacionDTO)
         {
-            var exist = await dbContext.Rifas.AnyAsync(x => x.Id == id);
-            if (!exist)
+            var existe = await dbContext.Rifas.AnyAsync(x => x.NombreRifa == rifaCreacionDTO.NombreRifa);
+
+            if (existe)
             {
-                return NotFound("La Rifa no fue encontrada.");
+                return BadRequest("Ya existe una rifa con este nombre");
             }
 
-            //var validateRelation = await dbContext.ArtistaCancion.AnyAsync   
+            var nuevoElemento = mapper.Map<Rifa>(rifaCreacionDTO);
+
+            dbContext.Add(nuevoElemento);
 
 
-            dbContext.Remove(new Rifa { Id = id });
+            await dbContext.SaveChangesAsync();
+
+            var rifaDTO = mapper.Map<RifaDTO>(nuevoElemento);
+
+            return CreatedAtRoute("GetPremiosRifa", new { id = nuevoElemento.Id }, rifaDTO);
+
+        }
+
+        [HttpPut("ModificarRifa/{id:int}")]
+        public async Task<ActionResult> Put(RifaCreacionDTO creacionRifaDTO, int id)
+        {
+            var existeRifa = await dbContext.Rifas.AnyAsync(x => x.Id == id);
+
+            if (!existeRifa)
+            {
+                return BadRequest("La rifa no existe");
+            }
+
+            var rifa = mapper.Map<Rifa>(creacionRifaDTO);
+            rifa.Id = id;
+
+            dbContext.Update(rifa);
             await dbContext.SaveChangesAsync();
             return Ok();
         }
 
-        //private void OrdenarPorparticpantes(Rifa rifa)
-        //{
-        //    if (rifa.ParticipanteRifaCarta != null)
-        //    {
-        //        for (int i = 0; i < rifa.ParticipanteRifaCarta.Count; i++)
-        //        {
-        //            rifa.ParticipanteRifaCarta[i].Orden_Lanzamiento = i;
-        //        }
-        //    }
-        //}
-
-        [HttpPatch("{id:int}")]
-        public async Task<ActionResult> Patch(int id, JsonPatchDocument<RifaPatchDTO> patchDocument)
+        [HttpDelete("EliminarRifa/{id:int}")]
+        public async Task<ActionResult> Delete([FromRoute] int id)
         {
-            if (patchDocument == null) { return BadRequest(); }
+            var existe = await dbContext.Rifas.AnyAsync(x => x.Id == id);
 
-            var rifaDB = await dbContext.Rifas.FirstOrDefaultAsync(x => x.Id == id);
-
-            if (rifaDB == null) { return NotFound(); }
-
-            var rifaDTO = mapper.Map<RifaPatchDTO>(rifaDB);
-
-            patchDocument.ApplyTo(rifaDTO);
-
-            var isValid = TryValidateModel(rifaDTO);
-
-            if (!isValid)
+            if (!existe)
             {
-                return BadRequest(ModelState);
+                return NotFound("No se encontro una rifa con ese id");
             }
 
-            mapper.Map(rifaDTO, rifaDB);
+            var relaciones = await dbContext.ParticipanteRifaCarta.Where(c => c.IdRifa == id.ToString()).ToListAsync();
+
+
+            foreach (var i in relaciones)
+            {
+                dbContext.Remove(i);
+                await dbContext.SaveChangesAsync();
+            }
+
+            var rifa = await dbContext.Rifas.Include(x => x.Premios).FirstAsync(x => x.Id == id);
+            dbContext.Remove(rifa);
 
             await dbContext.SaveChangesAsync();
-            return NoContent();
-        }
 
+            return Ok();
+        }
     }
 }
 

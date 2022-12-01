@@ -56,9 +56,9 @@ namespace WebApiCasino.Migrations
                 name: "ParticipanteRifaCarta",
                 columns: table => new
                 {
-                    IdParticipante = table.Column<int>(type: "int", nullable: false),
-                    IdRifa = table.Column<int>(type: "int", nullable: false),
-                    IdCarta = table.Column<int>(type: "int", nullable: false),
+                    IdParticipante = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    IdRifa = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    IdCarta = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     ParticipanteId = table.Column<int>(type: "int", nullable: true),
                     RifaId = table.Column<int>(type: "int", nullable: true),
                     CartaId = table.Column<int>(type: "int", nullable: true)

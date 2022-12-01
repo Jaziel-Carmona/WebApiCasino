@@ -69,14 +69,14 @@ namespace WebApiCasino.Migrations
 
             modelBuilder.Entity("WebApiCasino.Entidades.ParticipanteRifaCarta", b =>
                 {
-                    b.Property<int>("IdParticipante")
-                        .HasColumnType("int");
+                    b.Property<string>("IdParticipante")
+                        .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("IdRifa")
-                        .HasColumnType("int");
+                    b.Property<string>("IdRifa")
+                        .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("IdCarta")
-                        .HasColumnType("int");
+                    b.Property<string>("IdCarta")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int?>("CartaId")
                         .HasColumnType("int");

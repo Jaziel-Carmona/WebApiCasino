@@ -12,7 +12,7 @@ using WebApiCasino;
 namespace WebApiCasino.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20221201092440_Inicial")]
+    [Migration("20221201160119_Inicial")]
     partial class Inicial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -71,14 +71,14 @@ namespace WebApiCasino.Migrations
 
             modelBuilder.Entity("WebApiCasino.Entidades.ParticipanteRifaCarta", b =>
                 {
-                    b.Property<int>("IdParticipante")
-                        .HasColumnType("int");
+                    b.Property<string>("IdParticipante")
+                        .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("IdRifa")
-                        .HasColumnType("int");
+                    b.Property<string>("IdRifa")
+                        .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("IdCarta")
-                        .HasColumnType("int");
+                    b.Property<string>("IdCarta")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int?>("CartaId")
                         .HasColumnType("int");

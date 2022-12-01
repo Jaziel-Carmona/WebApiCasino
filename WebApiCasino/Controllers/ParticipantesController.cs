@@ -5,115 +5,197 @@ using WebApiCasino.Entidades;
 using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using WebApiCasino;
 
 namespace WebApiCasino.Controllers
 {
     [ApiController]
-    [Route("Participantes_de_Rifa")]
+    [Route("Participantes")]
     //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
     public class ParticipantesController : ControllerBase
     {
+
         private readonly ApplicationDbContext dbContext;
         private readonly IMapper mapper;
-        private readonly IConfiguration configuration;
 
-
-        public ParticipantesController(ApplicationDbContext context, IMapper mapper, IConfiguration configuration)
+        public ParticipantesController(ApplicationDbContext dbContext, IMapper mapper)
         {
-            this.dbContext = context;
+            this.dbContext = dbContext;
             this.mapper = mapper;
-            this.configuration = configuration;
         }
 
-        [HttpGet]
-        [AllowAnonymous]
-        public async Task<ActionResult<List<GetParticipanteDTO>>> Get()
+        [HttpGet("(Datos_Del_Participante)/{id:int}", Name = "Datos_Del_Participante")]
+        public async Task<ActionResult<GetParticipanteDTO>> GetById([FromRoute] int id)
         {
-            var participantes = await dbContext.Participantes.ToListAsync();
-            return mapper.Map<List<GetParticipanteDTO>>(participantes);
-        }
 
-        [HttpGet("{id:int}", Name = "obtenerparticipante")]
-        public async Task<ActionResult<ParticipanteDTOConRifas>> Get(int id)
-        {
-            var participante = await dbContext.Participantes
-                .Include(participanteDB => participanteDB.ParticipanteRifaCarta)
-                .ThenInclude(participanterifaCartaDB => participanterifaCartaDB.Rifa)
-                .FirstOrDefaultAsync(participanteBD => participanteBD.Id == id);
+            var participante = await dbContext.Participantes.FirstOrDefaultAsync(x => x.Id == id);
 
             if (participante == null)
             {
-                return NotFound();
+                return NotFound("No se encontro participante con ese id");
             }
 
-            return mapper.Map<ParticipanteDTOConRifas>(participante);
+            logger.LogInformation("Se obtiene el registro de un participante.");
 
+            return mapper.Map<GetParticipanteDTO>(participante);
         }
 
-        [HttpGet("obtenerParticipante/{nombre}")]
-        public async Task<ActionResult<List<GetParticipanteDTO>>> Get([FromRoute] string nombre)
+       
+
+        [HttpPost("Crear_Participante")]
+        public async Task<ActionResult> Post(ParticipanteDTO creacionParticipanteDTO)
         {
-            var participante = await dbContext.Participantes.Where(participanteBD => participanteBD.NombreParticipante.Contains(nombre)).ToListAsync();
+            var existeCorreo = await dbContext.Participantes.AnyAsync(x => x.Email == creacionParticipanteDTO.Email);
 
-            return mapper.Map<List<GetParticipanteDTO>>(participante);
-        }
-
-
-        [HttpPost]
-        public async Task<ActionResult> Post([FromBody] ParticipanteDTO participanteDto)
-        {
-
-            var existeParticipanteMismoNombre = await dbContext.Participantes.AnyAsync(x => x.NombreParticipante == participanteDto.NombreParticipante);
-
-            if (existeParticipanteMismoNombre)
+            if (existeCorreo)
             {
-                return BadRequest($"Ya existe un participante con el nombre {participanteDto.NombreParticipante}");
+                return BadRequest("Ya existe este correo");
             }
 
-            var participante = mapper.Map<Participante>(participanteDto);
 
-            dbContext.Add(participante);
+            var newParticipante = mapper.Map<Participante>(creacionParticipanteDTO);
+            dbContext.Add(newParticipante);
+
+            var partDTO = mapper.Map<GetParticipanteDTO>(newParticipante);
             await dbContext.SaveChangesAsync();
 
-            var participanteDTO = mapper.Map<GetParticipanteDTO>(participante);
+            var creado = await dbContext.Participantes.FirstOrDefaultAsync(participanteDB => participanteDB.Email == creacionParticipanteDTO.Email);
+            partDTO.Id = creado.Id;
+            return CreatedAtRoute("Datos_Del_Participante", new { Id = creado.Id }, partDTO);
+        }
 
-            return CreatedAtRoute("obtenerparticipante", new { id = participante.Id }, participanteDTO);
+        [HttpPost("Comprar_Carta_De_Rifa/ Participante{idParticipante:int}/Rifa{idRifa:int}/Carta{NumLoteria:int}")]
+        public async Task<ActionResult> PostRelacion(int idParticipante, int idRifa, int NumLoteria)
+        {
+            var existeParticipante = await dbContext.Participantes.AnyAsync(x => x.Id == idParticipante);
+
+            if (!existeParticipante)
+            {
+                return NotFound("No se encontro un participante con ese Id");
+            }
+
+            var existeRifa = await dbContext.Rifas.AnyAsync(x => x.Id == idRifa);
+
+            if (!existeRifa)
+            {
+                return NotFound("No se encontro una rifa con ese Id");
+            }
+
+            var existeCarta = await dbContext.Cartas.AnyAsync(x => x.Id == NumLoteria);
+
+            if (!existeCarta)
+            {
+                return NotFound("No se encontro un carta con ese Id");
+            }
+
+            try
+            {
+                var relacion = await dbContext.ParticipanteRifaCarta.SingleAsync(x => x.IdParticipante == idParticipante.ToString() && x.IdRifa == idRifa.ToString() && x.IdCarta == NumLoteria.ToString());
+                return BadRequest("Ya existe la relacion.");
+            }
+            catch
+            {
+                var listaParticipantes = await dbContext.ParticipanteRifaCarta.Where(x => x.IdRifa == idRifa.ToString()).ToListAsync();
+
+                if (!(listaParticipantes.Count() <= 54))
+                {
+                    return BadRequest("No hay lugar disponible en la rifa");
+                }
+
+                var cartaUsada = await dbContext.ParticipanteRifaCarta.AnyAsync(x => x.IdRifa == idRifa.ToString() && x.IdCarta == NumLoteria.ToString());
+
+                if (cartaUsada)
+                {
+                    return BadRequest("La carta ya esta siendo usada en esta rifa");
+                }
+
+                var carta = await dbContext.Cartas.FirstAsync(x => x.Id == NumLoteria);
+                var rifa = await dbContext.Rifas.FirstAsync(x => x.Id == idRifa);
+                var participante = await dbContext.Participantes.FirstAsync(x => x.Id == idParticipante);
+                var nuevaRelacion = new ParticipanteRifaCarta()
+                {
+                    IdParticipante = idParticipante.ToString(),
+                    IdRifa = idRifa.ToString(),
+                    IdCarta = NumLoteria.ToString(),
+                    Participante = participante,
+                    Rifa = rifa,
+                    Carta = carta
+                };
+                dbContext.Add(nuevaRelacion);
+
+                var relacionDTO = mapper.Map<ParticipanteRifaCarta>(nuevaRelacion);
+                await dbContext.SaveChangesAsync();
+
+                return Ok();
+            }
         }
 
 
-        [HttpPut("{id:int}")]
-        public async Task<ActionResult> Put(ParticipanteDTO participanteCreacionDTO, int id)
+        //[HttpPatch("Modificar_Participante/{id:int}")]
+        //[ServiceFilter(typeof(FiltroRegistro))]
+        //public async Task<ActionResult> Patch2(int id, JsonPatchDocument<ParticipantePatchDTO> patchDocument)
+        //{
+
+        //    if (patchDocument == null)
+        //    {
+        //        return BadRequest();
+        //    }
+
+        //    var participanteDB = await dbContext.Participantes.FirstOrDefaultAsync(x => x.Id == id);
+
+        //    if (participanteDB == null) { return NotFound(); }
+
+        //    var participanteDTO = mapper.Map<ParticipantePatchDTO>(participanteDB);
+
+        //    patchDocument.ApplyTo(participanteDTO);
+
+        //    var isValid = TryValidateModel(participanteDTO);
+
+        //    if (!isValid)
+        //    {
+        //        return BadRequest(ModelState);
+        //    }
+
+        //    mapper.Map(participanteDTO, participanteDB);
+        //    await dbContext.SaveChangesAsync();
+
+        //    return Ok();
+
+        //}
+
+
+        [HttpDelete("Eliminar_Inscripcion/Participante{idParticipante:int}/Rifa{idRifa:int}/Carta{NumLoteria:int}")]
+        public async Task<ActionResult> DeleteRelacion(int idParticipante, int idRifa, int NumLoteria)
         {
-            var exist = await dbContext.Participantes.AnyAsync(x => x.Id == id);
-            if (!exist)
+            var existeParticipante = await dbContext.Participantes.AnyAsync(x => x.Id == idParticipante);
+
+            if (!existeParticipante)
             {
-                return NotFound();
+                return NotFound("No se encontro un participante con ese Id");
             }
 
-            var participante = mapper.Map<Participante>(participanteCreacionDTO);
-            participante.Id = id;
+            var existeRifa = await dbContext.Rifas.AnyAsync(x => x.Id == idRifa);
 
-            dbContext.Update(participante);
-            await dbContext.SaveChangesAsync();
-            return NoContent();
-        }
-
-
-        [HttpDelete("{id:int}")]
-        public async Task<ActionResult> Delete(int id)
-        {
-            var exist = await dbContext.Participantes.AnyAsync(x => x.Id == id);
-            if (!exist)
+            if (!existeRifa)
             {
-                return NotFound("El registro del participante no fue encontrado.");
+                return NotFound("No se encontro una rifa con ese Id");
             }
 
-            dbContext.Remove(new Participante()
+            var existeCarta = await dbContext.Cartas.AnyAsync(x => x.Id == NumLoteria);
+
+            if (!existeCarta)
             {
-                Id = id
+                return NotFound("No se encontro un carta con ese Id");
+            }
+
+            dbContext.Remove(new ParticipanteRifaCarta
+            {
+                IdParticipante = idParticipante.ToString(),
+                IdRifa = idRifa.ToString(),
+                IdCarta = NumLoteria.ToString()
             });
+
             await dbContext.SaveChangesAsync();
+
             return Ok();
         }
     }

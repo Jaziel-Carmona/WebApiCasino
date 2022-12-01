@@ -11,12 +11,12 @@ using WebApiCasino.Entidades;
 namespace WebApiCasino.Controllers
 {
     [ApiController]
-    [Route("Cartas_de_Rifa")]
-    //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Route("Cartas_de_Loteria")]
     public class CartasController : ControllerBase
     {
         private readonly ApplicationDbContext dbContext;
         private readonly IMapper mapper;
+
 
         public CartasController(ApplicationDbContext dbContext, IMapper mapper)
         {
@@ -24,84 +24,29 @@ namespace WebApiCasino.Controllers
             this.mapper = mapper;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<List<CartaDTO>>> Get(int rifaId)
+        [HttpGet("Cartas_Por_Rifa/{id:int}/{nombreRifa}")]
+        public async Task<ActionResult<List<CartaDTO>>> GetById(int id, string nombreRifa)
         {
-            var existeRifa = await dbContext.Rifas.AnyAsync(rifaDB => rifaDB.Id == rifaId);
 
-            if (!existeRifa)
+            var existe = await dbContext.Rifas.AnyAsync(x => x.Id == id && x.NombreRifa == nombreRifa);
+
+            if (!existe)
             {
-                return NotFound();
+                return BadRequest("No existe la rifa a la que se desea acceder");
             }
 
-            var cartas = await dbContext.Premios.Where(cartaDB => cartaDB.RifaId == rifaId).ToListAsync();
-
+            var cartas = await dbContext.Cartas.ToListAsync();
+            var borrar = await dbContext.Cartas.ToListAsync();
+            var relaciones = await dbContext.ParticipanteRifaCarta.Where(c => c.IdRifa == id.ToString()).ToListAsync();
+            foreach (var i in relaciones)
+            {
+                int num = Int32.Parse(i.IdCarta);
+                num = num - 1;
+                cartas.Remove(borrar[num]);
+            }
+    
             return mapper.Map<List<CartaDTO>>(cartas);
         }
 
-        [HttpGet("{id:int}", Name = "obtenerCarta")]
-        public async Task<ActionResult<CartaDTO>> GetById(int id)
-        {
-            var carta = await dbContext.Premios.FirstOrDefaultAsync(cartaDB => cartaDB.Id == id);
-
-            if (carta == null)
-            {
-                return NotFound();
-            }
-
-            return mapper.Map<CartaDTO>(carta);
-        }
-
-        //[HttpPost]
-        //[AllowAnonymous]
-        //public async Task<ActionResult> Post(int rifaId, PremioCreacionDTO premioCreacionDTO)
-        //{
-        //    var emailClaim = HttpContext.User.Claims.Where(claim => claim.Type == "email").FirstOrDefault();
-
-        //    var email = emailClaim.Value;
-
-        //    var usuario = await userManager.FindByEmailAsync(email);
-        //    var usuarioId = usuario.Id;
-
-        //    var existeRifa = await dbContext.Rifas.AnyAsync(rifaDB => rifaDB.Id == rifaId);
-        //    if (!existeRifa)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    var premio = mapper.Map<Premios>(premioCreacionDTO);
-        //    premio.RifaId = rifaId;
-        //    premio.UsuarioId = usuarioId;
-        //    dbContext.Add(premio);
-        //    await dbContext.SaveChangesAsync();
-
-        //    var premioDTO = mapper.Map<PremioDTO>(premio);
-
-        //    return CreatedAtRoute("obtenerPremio", new { id = premio.Id, premioId = premioId }, premioDTO);
-        //}
-
-        [HttpPut("{id:int}")]
-        public async Task<ActionResult> Put(int rifaId, int id, CartaCreacionDTO cartaCreacionDTO)
-        {
-            var existeRifa = await dbContext.Rifas.AnyAsync(rifaDB => rifaDB.Id == rifaId);
-            if (!existeRifa)
-            {
-                return NotFound();
-            }
-
-            var existeCarta = await dbContext.Cartas.AnyAsync(cartaDB => cartaDB.Id == id);
-
-            if (!existeCarta)
-            {
-                return NotFound();
-            }
-
-            var carta = mapper.Map<Carta>(cartaCreacionDTO);
-            carta.Id = id;
-
-            dbContext.Update(carta);
-            await dbContext.SaveChangesAsync();
-            return NoContent();
-        }
     }
 }

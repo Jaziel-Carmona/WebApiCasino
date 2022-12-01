@@ -14,8 +14,8 @@ namespace WebApiCasino.Utilidades
             CreateMap<Carta, CartaDTO>();
             CreateMap<Participante, ParticipanteDTOConRifas>()
                 .ForMember(participanteDTO => participanteDTO.Rifas, opciones => opciones.MapFrom(MapParticipanteDTORifas));
-            CreateMap<RifaCreacionDTO, Rifa>()
-                .ForMember(rifa => rifa.ParticipanteRifaCarta, opciones => opciones.MapFrom(MapParticipanteRifaCarta));
+            //CreateMap<RifaCreacionDTO, Rifa>()
+            //    .ForMember(rifa => rifa.ParticipanteRifaCarta, opciones => opciones.MapFrom(MapParticipanteRifaCarta));
             CreateMap<Rifa, RifaDTO>();
             CreateMap<RifaCreacionDTO, Rifa>();
             CreateMap<Rifa, RifaDTOConParticipantes>()
@@ -29,6 +29,8 @@ namespace WebApiCasino.Utilidades
             CreateMap<Premios, PremioDTO>();
 
         }
+
+        //YAAAAA JALOOO LETS GOOOOOOO
 
         private List<RifaDTO> MapParticipanteDTORifas(Participante participante, GetParticipanteDTO getParticipanteDTO)
         {
@@ -61,7 +63,6 @@ namespace WebApiCasino.Utilidades
             {
                 result.Add(new GetParticipanteDTO()
                 {
-                    Id = participanterifacarta.IdParticipante,
                     NombreParticipante = participanterifacarta.Participante.NombreParticipante
                 });
             }
@@ -69,17 +70,17 @@ namespace WebApiCasino.Utilidades
             return result;
         }
 
-        private List<ParticipanteRifaCarta> MapParticipanteRifaCarta(RifaCreacionDTO rifaCreacionDTO, Rifa rifa)
-        {
-            var resultado = new List<ParticipanteRifaCarta>();
+        //private List<ParticipanteRifaCarta> MapParticipanteRifaCarta(RifaCreacionDTO rifaCreacionDTO, Rifa rifa)
+        //{
+        //    var resultado = new List<ParticipanteRifaCarta>();
 
-            if (rifaCreacionDTO.ParticipantesIds == null) { return resultado; }
-            foreach (var participanteId in rifaCreacionDTO.ParticipantesIds)
-            {
-                resultado.Add(new ParticipanteRifaCarta() { IdParticipante = participanteId });
-            }
-            return resultado;
-        }
+        //    if (rifaCreacionDTO.ParticipantesIds == null) { return resultado; }
+        //    foreach (var participanteId in rifaCreacionDTO.ParticipantesIds)
+        //    {
+        //        resultado.Add(new ParticipanteRifaCarta() { IdParticipante = participanteId });
+        //    }
+        //    return resultado;
+        //}
 
         private List<CartaDTO> MapRifaDTOConCartas(Rifa rifa, RifaDTOConCartas RifaDTOconCartas)
         {

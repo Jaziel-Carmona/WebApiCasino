@@ -11,7 +11,7 @@ namespace WebApiCasino.DTOs
 
         public DateTime Fecha_Realizacion { get; set; }
 
-        public List<int> ParticipantesIds { get; set; }
+        //public List<int> ParticipantesIds { get; set; }
 
     }
 }

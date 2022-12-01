@@ -2,9 +2,11 @@
 {
     public class ParticipanteRifaCarta
     {
-        public int IdParticipante { get; set; }
-        public int IdRifa { get; set; }
-        public int IdCarta { get; set; }
+        public string IdParticipante { get; set; }
+
+        public string IdRifa { get; set; }
+
+        public string IdCarta { get; set; }
 
         public Participante Participante { get; set; }
         public Rifa Rifa { get; set; }
