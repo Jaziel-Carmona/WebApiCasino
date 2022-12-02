@@ -5,6 +5,7 @@ namespace WebApiCasino.DTOs
 {
     public class ParticipanteDTO
     {
+        public int Id { get; set; }
         [Required]
         [PrimerLetraMayuscula]
         [StringLength(maximumLength: 20, ErrorMessage = "El campo {0} solo puede tener máximo 20 carácteres")]

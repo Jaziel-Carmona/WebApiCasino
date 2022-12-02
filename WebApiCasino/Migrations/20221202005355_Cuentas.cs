@@ -11,7 +11,7 @@ namespace WebApiCasino.Migrations
         {
             migrationBuilder.AddColumn<string>(
                 name: "UsuarioId",
-                table: "Premios",
+                table: "Participantes",
                 type: "nvarchar(450)",
                 nullable: true);
 
@@ -161,8 +161,8 @@ namespace WebApiCasino.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Premios_UsuarioId",
-                table: "Premios",
+                name: "IX_Participantes_UsuarioId",
+                table: "Participantes",
                 column: "UsuarioId");
 
             migrationBuilder.CreateIndex(
@@ -205,8 +205,8 @@ namespace WebApiCasino.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.AddForeignKey(
-                name: "FK_Premios_AspNetUsers_UsuarioId",
-                table: "Premios",
+                name: "FK_Participantes_AspNetUsers_UsuarioId",
+                table: "Participantes",
                 column: "UsuarioId",
                 principalTable: "AspNetUsers",
                 principalColumn: "Id");
@@ -215,8 +215,8 @@ namespace WebApiCasino.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(
-                name: "FK_Premios_AspNetUsers_UsuarioId",
-                table: "Premios");
+                name: "FK_Participantes_AspNetUsers_UsuarioId",
+                table: "Participantes");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
@@ -240,12 +240,12 @@ namespace WebApiCasino.Migrations
                 name: "AspNetUsers");
 
             migrationBuilder.DropIndex(
-                name: "IX_Premios_UsuarioId",
-                table: "Premios");
+                name: "IX_Participantes_UsuarioId",
+                table: "Participantes");
 
             migrationBuilder.DropColumn(
                 name: "UsuarioId",
-                table: "Premios");
+                table: "Participantes");
         }
     }
 }

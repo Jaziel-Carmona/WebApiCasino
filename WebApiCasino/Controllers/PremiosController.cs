@@ -1,9 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Server.HttpSys;
 using Microsoft.EntityFrameworkCore;
 using WebApiCasino.DTOs;
 using WebApiCasino.Entidades;
@@ -12,7 +10,6 @@ namespace WebApiCasino.Controllers
 {
     [ApiController]
     [Route("Premios")]
-    //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
     public class PremiosController : ControllerBase
     {
         private readonly ApplicationDbContext dbContext;
@@ -28,103 +25,82 @@ namespace WebApiCasino.Controllers
             this.mapper = mapper;
         }
 
-        [HttpPost("Crear_Premio/{rifaId:int}")]
-        public async Task<ActionResult> Post(int rifaId, PremioCreacionDTO creacionPremioDTO)
+        //[HttpGet]   
+        //[AllowAnonymous]
+        //public async Task<ActionResult<List<PremioDTO>>> Get()
+        //{
+        //    var premio = await dbContext.Premios.ToListAsync();
+        //    return mapper.Map<List<PremioDTO>>(premio);
+        //}
+
+        [HttpGet("Mostrar_Premios")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Administrador")]
+        public async Task<ActionResult<List<Rifa>>> Get(int id)
         {
-
-            var existeRifa = await dbContext.Rifas.AnyAsync(rifaDB => rifaDB.Id == rifaId);
-
-            if (!existeRifa)
+            var rifa = await dbContext.Rifas.FirstOrDefaultAsync(x => x.Id == id);
+            if (rifa == null)
             {
-                return NotFound();
+                return NotFound("No se encontró el premio ingresado.");
             }
-
-            var existepremio = await dbContext.Premios.Where(c => c.RifaId == rifaId).ToListAsync();
-
-            foreach (var i in existepremio)
+            var existpremio = await dbContext.Premios.AnyAsync(premioDB => premioDB.RifaId == rifa.Id);
+            if (!existpremio)
             {
-                if (i.NombrePremio == creacionPremioDTO.NombrePremio)
-                {
-                    return BadRequest("Ese premio ya existe en esta rifa");
-                }
-
-                if (i.NumPremio == creacionPremioDTO.NumPremio)
-                {
-                    return BadRequest("Ese nivel ya existe en otro premio de esta rifa");
-                }
+                return NotFound("No se encontró el premio ingresado.");
             }
-
-            var premio = mapper.Map<Premios>(creacionPremioDTO);
-            premio.RifaId = rifaId;
-            dbContext.Add(premio);
-            await dbContext.SaveChangesAsync();
-
-            var getPremioDTO = mapper.Map<PremioDTO>(premio);
-
-            return NoContent();
-
+            int premioRifaCount = await dbContext.Premios.CountAsync(premioDB => premioDB.RifaId == rifa.Id).ConfigureAwait(false);
+            Random premiorandom = new Random();
+            int numrandom = premiorandom.Next(0, premioRifaCount);
+            var premio = await dbContext.Premios.Skip(numrandom).FirstOrDefaultAsync(premioDB => premioDB.RifaId == rifa.Id);
+            return Ok(premio);
         }
 
-        [HttpPut("Modificar_Premio/{id:int}/{rifaId:int}")]
-        public async Task<ActionResult> Put(int id, int rifaId, PremioCreacionDTO creacionPremioDTO)
+        [HttpPost("Ingresar_premio")]  
+        public async Task<ActionResult> Post(PremioCreacionDTO premioCreacionDTO)
         {
-
-            var existerRifa = await dbContext.Rifas.AnyAsync(x => x.Id == rifaId);
-
-            if (!existerRifa)
+            var existpremio = await dbContext.Premios.AnyAsync(x => x.NombrePremio == premioCreacionDTO.NombrePremio);
+            if (existpremio)
             {
-                return NotFound("La rifa no existe");
+                return BadRequest("Ya existe el premio, intente registrar otro diferente.");
             }
+            var premio = mapper.Map<Premios>(premioCreacionDTO);
+            dbContext.Add(premio);
+            await dbContext.SaveChangesAsync();
+            return Ok();
+        }
 
-            var existePremio = await dbContext.Premios.AnyAsync(x => x.Id == id);
-
-            if (!existePremio)
+        [HttpPut("Modificar_premio:{id:int}")]       
+        public async Task<ActionResult> Put(PremioCreacionDTO premioCreacionDTO, int id)
+        {
+            var exist = await dbContext.Premios.AnyAsync(x => x.Id == id);
+            if (!exist)
             {
-                return NotFound("El premio no existe");
+                return NotFound("No se encontró el premio ingresado.");
             }
-
-            var premio = mapper.Map<Premios>(creacionPremioDTO);
+            var premio = mapper.Map<Premios>(premioCreacionDTO);
             premio.Id = id;
-            premio.RifaId = rifaId;
-
+            if (premio.Id != id)
+            {
+                return BadRequest("El id del premio no coincide, inténtelo de nuevo.");
+            }
             dbContext.Update(premio);
             await dbContext.SaveChangesAsync();
             return Ok();
-
         }
 
-        [HttpDelete("Eliminar_Premio/{id:int}/{rifaId:int}")]
-        public async Task<ActionResult> Delete(int id, int rifaId)
+        [HttpDelete("Borrar_Premio/{id:int}")]    //ELIMINACION DE PREMIO
+        public async Task<ActionResult> Delete(int id)
         {
-
-            var existerRifa = await dbContext.Rifas.AnyAsync(x => x.Id == rifaId);
-
-            if (!existerRifa)
+            var exist = await dbContext.Premios.AnyAsync(x => x.Id == id);
+            if (!exist)
             {
-                return NotFound("La rifa no existe");
+                return NotFound("No se encontró el premio, inténtelo de nuevo.");
             }
-
-            var existePremio = await dbContext.Premios.AnyAsync(x => x.Id == id);
-
-            if (!existePremio)
+            dbContext.Remove(new Premios()
             {
-                return NotFound("El premio no existe");
-            }
-
-            var premio = await dbContext.Premios.Where(c => c.RifaId == rifaId).ToListAsync();
-
-            foreach (var i in premio)
-            {
-                if (i.Id == id)
-                {
-                    dbContext.Remove(i);
-                    await dbContext.SaveChangesAsync();
-                }
-            }
-
+                Id = id
+            });
+            await dbContext.SaveChangesAsync();
             return Ok();
-
         }
-
     }
 }

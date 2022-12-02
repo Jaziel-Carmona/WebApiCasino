@@ -260,7 +260,12 @@ namespace WebApiCasino.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("UsuarioId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
 
                     b.ToTable("Participantes");
                 });
@@ -320,14 +325,9 @@ namespace WebApiCasino.Migrations
                     b.Property<int>("RifaId")
                         .HasColumnType("int");
 
-                    b.Property<string>("UsuarioId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("RifaId");
-
-                    b.HasIndex("UsuarioId");
 
                     b.ToTable("Premios");
                 });
@@ -404,6 +404,15 @@ namespace WebApiCasino.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("WebApiCasino.Entidades.Participante", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId");
+
+                    b.Navigation("Usuario");
+                });
+
             modelBuilder.Entity("WebApiCasino.Entidades.ParticipanteRifaCarta", b =>
                 {
                     b.HasOne("WebApiCasino.Entidades.Carta", "Carta")
@@ -433,13 +442,7 @@ namespace WebApiCasino.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "Usuario")
-                        .WithMany()
-                        .HasForeignKey("UsuarioId");
-
                     b.Navigation("Rifa");
-
-                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("WebApiCasino.Entidades.Carta", b =>

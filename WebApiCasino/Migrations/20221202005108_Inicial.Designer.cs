@@ -12,8 +12,8 @@ using WebApiCasino;
 namespace WebApiCasino.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20221201190425_Initial")]
-    partial class Initial
+    [Migration("20221202005108_Inicial")]
+    partial class Inicial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

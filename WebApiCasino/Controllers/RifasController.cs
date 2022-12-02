@@ -27,108 +27,70 @@ namespace WebApiCasino.Controllers
             this.mapper = mapper;
         }
 
-        [HttpGet("Obtener_Rifa_Con_Premios/Rifa/{id:int}", Name = "GetPremiosRifa")]
-        public async Task<ActionResult<RifaDTOConPremios>> GetPremiosRifaId([FromRoute] int id)
+        [HttpGet("Lista_Rifas")]      
+        public async Task<ActionResult<List<RifaDTO>>> Get()
         {
-            var rifa = await dbContext.Rifas
-                .Include(x => x.Premios)
-                .FirstOrDefaultAsync(x => x.Id == id);
-
-            if (rifa == null)
-            {
-                return NotFound("No se encontro una rifa con el Id ingresado");
-            }
-
-            List<PremioDTO> listapremios = new List<PremioDTO>();
-
-            foreach (var i in rifa.Premios)
-            {
-                listapremios.Add(new PremioDTO
-                {
-                    NombrePremio = i.NombrePremio,
-                    NumPremio = i.NumPremio,
-                });
-            }
-
-            var rifapremio = new RifaDTOConPremios()
-            {
-                NombreRifa = rifa.NombreRifa,
-                Fecha_Realizacion = rifa.Fecha_Realizacion,
-                PremioDTO = listapremios
-            };
-
-            logger.LogInformation("Se obtiene el listado de premios de una rifa.");
-            return mapper.Map<RifaDTOConPremios>(rifapremio);
-
+            var rifa = await dbContext.Rifas.ToListAsync();
+            return mapper.Map<List<RifaDTO>>(rifa);
         }
 
-        [HttpPost("CrearUnaRifa")]
+        //[HttpGet("{nombre}")]
+        //public async Task<ActionResult<List<RifaDTO>>> Get([FromRoute] string nombre)
+        //{
+        //    var rifas = await dbContext.Rifas.Where(rifaBD => rifaBD.NombreRifa.Contains(nombre)).ToListAsync();
+
+        //    return mapper.Map<List<RifaDTO>>(rifas);
+
+        //}
+
+        [HttpPost]
         public async Task<ActionResult> Post(RifaCreacionDTO rifaCreacionDTO)
         {
-            var existe = await dbContext.Rifas.AnyAsync(x => x.NombreRifa == rifaCreacionDTO.NombreRifa);
+            var existrifa = await dbContext.Rifas.AnyAsync(x => x.Id == rifaCreacionDTO.Id);
 
-            if (existe)
+            if (existrifa)
             {
-                return BadRequest("Ya existe una rifa con este nombre");
+                return BadRequest("Ya existe una rifa con el id.");
             }
-
-            var nuevoElemento = mapper.Map<Rifa>(rifaCreacionDTO);
-
-            dbContext.Add(nuevoElemento);
-
-
+            var rifa = mapper.Map<Rifa>(rifaCreacionDTO);
+            dbContext.Add(rifa);
             await dbContext.SaveChangesAsync();
-
-            var rifaDTO = mapper.Map<RifaDTO>(nuevoElemento);
-
-            return CreatedAtRoute("GetPremiosRifa", new { id = nuevoElemento.Id }, rifaDTO);
-
+            return Ok();
         }
 
-        [HttpPut("ModificarRifa/{id:int}")]
-        public async Task<ActionResult> Put(RifaCreacionDTO creacionRifaDTO, int id)
+        [HttpPut("Modificar_Rifa/{id:int}")]
+        public async Task<ActionResult> Put(RifaCreacionDTO rifaCreacionDTO, int id)
         {
-            var existeRifa = await dbContext.Rifas.AnyAsync(x => x.Id == id);
-
-            if (!existeRifa)
+            var exist = await dbContext.Rifas.AnyAsync(x => x.Id == id);
+            if (!exist)
             {
-                return BadRequest("La rifa no existe");
+                return NotFound("No se encontró la rifa, intentelo más tarde.");
             }
-
-            var rifa = mapper.Map<Rifa>(creacionRifaDTO);
+            var rifa = mapper.Map<Rifa>(rifaCreacionDTO);
             rifa.Id = id;
-
+            if (rifa.Id != id)
+            {
+                return BadRequest("El id no coincide con el participante, ingreselo correctamente.");
+            }
             dbContext.Update(rifa);
             await dbContext.SaveChangesAsync();
             return Ok();
         }
 
-        [HttpDelete("EliminarRifa/{id:int}")]
-        public async Task<ActionResult> Delete([FromRoute] int id)
+        [HttpDelete("Borrar_Rifa/{id:int}")]
+        public async Task<ActionResult> Delete(int id)
         {
-            var existe = await dbContext.Rifas.AnyAsync(x => x.Id == id);
-
-            if (!existe)
+            var existrifa = await dbContext.Rifas.AnyAsync(x => x.Id == id);
+            if (!existrifa)
             {
-                return NotFound("No se encontro una rifa con ese id");
+                return NotFound("No se encontró ninguna rifa, ingreselo nuevamente.");
             }
-
-            var relaciones = await dbContext.ParticipanteRifaCarta.Where(c => c.IdRifa == id.ToString()).ToListAsync();
-
-
-            foreach (var i in relaciones)
+            dbContext.Remove(new Rifa()
             {
-                dbContext.Remove(i);
-                await dbContext.SaveChangesAsync();
-            }
-
-            var rifa = await dbContext.Rifas.Include(x => x.Premios).FirstAsync(x => x.Id == id);
-            dbContext.Remove(rifa);
-
+                Id = id
+            });
             await dbContext.SaveChangesAsync();
-
             return Ok();
         }
     }
 }
-
